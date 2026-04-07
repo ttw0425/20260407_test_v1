@@ -6,38 +6,49 @@
     <title>感熱紙列印稿</title>
     <style>
         body { margin: 0; padding: 0; background-color: white; }
+
+        /* 這裡是調整左右邊框的關鍵 */
         .thermal-strip {
             width: 380px; /* 喵喵機標準寬度 */
             margin: 0 auto;
-            padding: 40px 0;
+            padding: 40px 25px; /* 第一個數字是上下留白，第二個數字 25px 是左右邊框留白 */
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            box-sizing: border-box; /* 確保 padding 不會撐開總寬度 */
         }
+
         .thermal-img {
-            width: 100%;
+            width: 100%; /* 現在會根據父容器內縮後的寬度自動填滿 */
             filter: grayscale(100%) contrast(160%); /* 黑白處理 */
-            margin-bottom: 25px;
+            margin-bottom: 30px; /* 圖片與文字的距離 */
             display: none;
         }
+
         .thermal-text {
             width: 100%;
-            padding: 0 15px;
             font-size: 1.5rem;
             font-weight: bold;
-            line-height: 1.6;
+            line-height: 1.8; /* 增加行距，列印更清晰 */
             color: black;
             word-wrap: break-word;
-            white-space: pre-wrap;
-            box-sizing: border-box;
+            white-space: pre-wrap; /* 保留換行 */
+            text-align: left; /* 左側切齊 */
         }
-        /* 螢幕上顯示的返回鍵，列印/分享時會隱藏 */
+
+        /* 螢幕上顯示的返回鍵，分享時會隱藏 */
         .back-btn {
             position: fixed; bottom: 20px; right: 20px;
-            background: #666; color: white; padding: 10px 20px;
-            border-radius: 20px; text-decoration: none; font-size: 14px;
+            background: #d35400; color: white; padding: 12px 24px;
+            border-radius: 30px; text-decoration: none; 
+            font-size: 14px; font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        @media print { .back-btn { display: none; } }
+
+        @media print { 
+            .back-btn { display: none; } 
+            .thermal-strip { padding: 20px 25px; } /* 列印時縮減上下，保留左右 */
+        }
     </style>
 </head>
 <body>
@@ -47,7 +58,7 @@
         <div id="displayText" class="thermal-text"></div>
     </div>
 
-    <a href="index.html" class="back-btn">回上一頁</a>
+    <a href="index.html" class="back-btn">回上一頁修改</a>
 
     <script>
         // 解析網址參數
@@ -55,7 +66,7 @@
         const imgUrl = params.get('img');
         const textContent = params.get('text');
 
-        if (imgUrl) {
+        if (imgUrl && imgUrl !== 'undefined') {
             const imgEl = document.getElementById('displayImg');
             imgEl.src = decodeURIComponent(imgUrl);
             imgEl.style.display = 'block';
