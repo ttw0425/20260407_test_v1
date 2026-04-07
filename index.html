@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>感熱紙列印工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 復刻儀式網頁的全局行距與背景 */
+        body { line-height: 1.9; background-color: #f3f4f6; font-family: sans-serif; } 
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* 復刻儀式網頁的卡片樣式：白底、圓角、陰影 */
+        .儀式卡片 {
+            background: white; width: 92%; max-width: 450px;
+            margin: 40px auto; padding: 40px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* 復刻儀式網頁的輸入框瘦身、留白與淺灰底色 */
+        input, textarea { 
+            background-color: #f5f5f5 !important; 
+            border: 1px solid #ddd !important; 
+            border-radius: 4px; 
+            width: 100%; margin-bottom: 2.2rem; 
+            padding: 12px 15px; font-size: 1rem;
+            min-height: 50px; outline: none;
+        }
+
+        textarea { min-height: 160px; resize: none; }
+
+        /* 復刻儀式網頁的上傳框樣式 */
+        .儀式上傳框 { 
+            border: 2px dashed #999; background: #ededed; 
+            width: 100%; margin-bottom: 2.5rem;
+            height: 140px; display: flex; align-items: center; 
+            justify-content: center; cursor: pointer; 
+            color: #555; text-align: center; border-radius: 4px;
+        }
+
+        /* 復刻儀式網頁的深橘色按鈕按鈕 (#d35400) */
+        .btn-儀式完成 { 
+            background-color: #d35400; color: white; 
+            width: 100%; margin-top: 25px;
+            padding: 15px; font-weight: bold; border-radius: 4px; 
+            font-size: 1.1rem; letter-spacing: 2px;
+        }
+
+        /* 復刻儀式網頁的標籤文字樣式 */
+        label, .font-bold { 
+            font-size: 1rem; font-weight: bold; 
+            display: block; margin-top: 15px; margin-bottom: 8px; 
+        }
+
+        /* 復刻儀式網頁的標題居中與下留白 */
+        h2 { margin-bottom: 3.5rem !important; }
+
+        /* --- 列印模式專屬樣式 --- */
+        #print-view { background-color: white; padding: 0; margin: 0; }
+        .thermal-strip {
+            width: 380px; /* 喵喵機常用像素寬度 */
+            margin: 0 auto;
+            padding: 40px 0; /* 保留上下留白 */
+            background: white;
+            display: flex; flex-direction: column; align-items: flex-start;
+        }
+
+        .thermal-img {
+            width: 100%; /* 滿版 */
+            filter: grayscale(100%) contrast(160%); /* 黑白高對比處理 */
+            display: block; margin-bottom: 25px;
+        }
+
+        .thermal-text {
+            width: 100%; padding: 0 15px; /* 文字與圖片左側對齊 */
+            font-size: 1.5rem; font-weight: bold;
+            color: black; word-wrap: break-word;
+            white-space: pre-wrap; text-align: left;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body, #print-view { background: white !important; }
+            .儀式卡片 { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-200 flex justify-center py-10 px-4">
+
+    <div id="page1" class="page active no-print">
+        <div class="儀式卡片 flex flex-col justify-between min-h-[600px]">
+            <div id="content-area">
+                <h2 class="text-center text-2xl font-bold">列印內容製作</h2>
+                
+                <label>上傳圖片 (黑白滿版)</label>
+                <div class="儀式上傳框" onclick="document.getElementById('fileInput').click()" id="uploadStatus">
+                    點擊上傳圖片
+                </div>
+                <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="uploadToImgBB(this)">
+                <input type="hidden" id="finalImgUrl"> <label>列印文字</label>
+                <textarea id="textContent" placeholder="請輸入欲列印的文字內容..."></textarea>
+                
+                <button class="btn-儀式完成" onclick="generatePrint()">完成並列印</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page2" class="page">
+        <div class="thermal-strip">
+            <img id="printImg" class="thermal-img" style="display:none;">
+            <div id="printText" class="thermal-text"></div>
+        </div>
+
+        <div class="no-print text-center py-10">
+            <button onclick="location.reload()" class="bg-gray-500 text-white px-8 py-2 rounded">回上一頁</button>
+            <p class="mt-4 text-sm text-gray-400">現在您可以按手機瀏覽器的「分享」<br>傳送到喵喵機 App 進行列印</p>
+        </div>
+    </div>
+
+    <script>
+        // --- 請使用您的 ImgBB API Key ---
+        const IMGBB_KEY = 'c771d4d74bbeeac8401c8c2ec77452f0'; 
+
+        // 圖片上傳至 ImgBB
+        async function uploadToImgBB(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            document.getElementById('uploadStatus').innerText = "上傳中...";
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const res = await resp.json();
+                if (res.success) {
+                    document.getElementById('finalImgUrl').value = res.data.url;
+                    // 復刻儀式網頁的上傳成功文字樣式
+                    document.getElementById('uploadStatus').innerText = "✔️ 上傳成功";
+                    document.getElementById('uploadStatus').style.borderColor = "#27ae60";
+                } else {
+                    alert("上傳失敗");
+                }
+            } catch (e) {
+                alert("網路錯誤，無法上傳圖片");
+            }
+        }
+
+        // 產生列印視圖
+        function generatePrint() {
+            const imgUrl = document.getElementById('finalImgUrl').value;
+            const text = document.getElementById('textContent').value;
+
+            if (!imgUrl && !text) {
+                alert("請至少提供圖片或文字");
+                return;
+            }
+
+            // 切換頁面
+            document.getElementById('page1').classList.remove('active');
+            document.getElementById('page2').classList.add('active');
+            // 將全域背景設為白，模擬感熱紙
+            document.body.classList.remove('bg-gray-200');
+            document.body.classList.add('bg-white');
+
+            // 渲染內容
+            const printImg = document.getElementById('printImg');
+            if (imgUrl) {
+                printImg.src = imgUrl;
+                printImg.style.display = "block";
+            }
+            
+            document.getElementById('printText').innerText = text;
+
+            // 滾動到頂部
+            window.scrollTo(0,0);
+        }
+    </script>
+</body>
+</html>
