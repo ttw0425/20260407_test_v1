@@ -5,68 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>感熱紙列印稿</title>
     <style>
-        body { margin: 0; padding: 0; background-color: white; }
+        /* 移除 body 預設邊距 */
+        body { margin: 0; padding: 0; background-color: white; width: 380px; }
 
-        /* 這裡是調整左右邊框的關鍵 */
-        .thermal-strip {
-            width: 380px; /* 喵喵機標準寬度 */
-            margin: 0 auto;
-            padding: 40px 25px; /* 第一個數字是上下留白，第二個數字 25px 是左右邊框留白 */
+        .thermal-container {
+            width: 380px; 
+            margin: 0;
+            /* 保持左右 25px 邊框，縮減上下 padding (從 40px 改為 20px) */
+            padding: 20px 25px; 
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            box-sizing: border-box; /* 確保 padding 不會撐開總寬度 */
+            box-sizing: border-box;
         }
 
+        /* 圖片樣式：左右留白由容器 padding 控制，圖片與文字距離保持 25px */
         .thermal-img {
-            width: 100%; /* 現在會根據父容器內縮後的寬度自動填滿 */
-            filter: grayscale(100%) contrast(160%); /* 黑白處理 */
-            margin-bottom: 30px; /* 圖片與文字的距離 */
+            width: 100%; 
+            filter: grayscale(100%) contrast(160%); 
+            margin-bottom: 25px; /* 保持原本的距離 */
             display: none;
         }
 
+        /* 文字樣式：左右留白由容器 padding 控制 */
         .thermal-text {
             width: 100%;
-            font-size: 1.0rem;
+            font-size: 1.15rem; 
             font-weight: bold;
-            line-height: 1.8; /* 增加行距，列印更清晰 */
+            line-height: 1.7; 
             color: black;
             word-wrap: break-word;
-            white-space: pre-wrap; /* 保留換行 */
-            text-align: left; /* 左側切齊 */
+            white-space: pre-wrap; 
+            text-align: left; 
         }
 
-        /* 螢幕上顯示的返回鍵，分享時會隱藏 */
+        /* 底部緩衝：極小化，解決下端留白過多問題 */
+        .thermal-footer {
+            height: 5px;
+            width: 100%;
+        }
+
+        /* 返回鍵 (螢幕顯示用) */
         .back-btn {
             position: fixed; bottom: 20px; right: 20px;
             background: #d35400; color: white; padding: 12px 24px;
             border-radius: 30px; text-decoration: none; 
             font-size: 14px; font-weight: bold;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 100;
         }
 
         @media print { 
             .back-btn { display: none; } 
-            .thermal-strip { padding: 20px 25px; } /* 列印時縮減上下，保留左右 */
+            body, .thermal-container { width: 380px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="thermal-strip">
+    <div class="thermal-container">
         <img id="displayImg" class="thermal-img">
+        
         <div id="displayText" class="thermal-text"></div>
+        
+        <div class="thermal-footer"></div>
     </div>
 
     <a href="index.html" class="back-btn">回上一頁修改</a>
 
     <script>
-        // 解析網址參數
         const params = new URLSearchParams(window.location.search);
         const imgUrl = params.get('img');
         const textContent = params.get('text');
 
-        if (imgUrl && imgUrl !== 'undefined') {
+        if (imgUrl && imgUrl !== 'undefined' && imgUrl !== 'null' && imgUrl !== '') {
             const imgEl = document.getElementById('displayImg');
             imgEl.src = decodeURIComponent(imgUrl);
             imgEl.style.display = 'block';
