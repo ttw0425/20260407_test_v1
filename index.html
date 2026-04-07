@@ -3,43 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>儀式感熱紙工具 - 輸入</title>
+    <title>感熱紙列印製作</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { line-height: 1.9; background-color: #f3f4f6; } 
+        /* 全局風格優化 */
+        body { line-height: 1.8; background-color: #f3f4f6; } 
+        
+        /* 核心卡片樣式：白底、圓角、陰影 */
         .儀式卡片 {
             background: white; width: 92%; max-width: 450px;
-            margin: 40px auto; padding: 40px 30px;
-            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: 40px auto; padding: 45px 25px; /* 適度的卡片內邊距 */
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+
+        /* 輸入框：恢復寬度 100% 滿版，但文字內部留白 */
         input, textarea { 
-            background-color: #f5f5f5 !important; border: 1px solid #ddd !important; 
-            border-radius: 4px; width: 100%; margin-bottom: 2.2rem; 
-            padding: 15px; min-height: 50px; outline: none;
+            background-color: #f5f5f5 !important; 
+            border: 1px solid #ddd !important; 
+            border-radius: 4px; 
+            width: 100%; /* 恢復滿版 */
+            margin-bottom: 2rem; 
+            display: block; outline: none; 
+            padding: 15px 18px; /* 文字輸入後的內部留白 */
+            font-size: 1rem;
+            min-height: 52px;
+            line-height: 1.6;
         }
+
+        textarea { min-height: 180px; resize: none; }
+
+        /* 上傳框：恢復寬度 100% 滿版 */
         .儀式上傳框 { 
             border: 2px dashed #999; background: #ededed; 
+            width: 100%; margin-bottom: 2.5rem;
             height: 140px; display: flex; align-items: center; 
-            justify-content: center; cursor: pointer; margin-bottom: 2.5rem;
-            color: #555; border-radius: 4px;
+            justify-content: center; cursor: pointer; 
+            color: #555; text-align: center; border-radius: 4px;
         }
+
+        /* 標籤文字 */
+        label, .font-bold { 
+            font-size: 1rem; font-weight: bold; 
+            display: block; margin-top: 15px; margin-bottom: 10px; 
+        }
+
+        /* 深橘色按鈕 (#d35400)：恢復寬度 100% 滿版 */
         .btn-儀式完成 { 
-            background-color: #d35400; color: white; width: 100%;
-            padding: 15px; font-weight: bold; border-radius: 4px; letter-spacing: 2px;
+            background-color: #d35400; color: white; 
+            width: 100%; margin-top: 30px;
+            padding: 15px; font-weight: bold; border-radius: 4px; 
+            font-size: 1.1rem; letter-spacing: 2px;
+            display: block;
         }
+
+        h2 { margin-bottom: 3.5rem !important; }
     </style>
 </head>
-<body class="flex justify-center py-10 px-4">
+<body class="bg-gray-200 flex justify-center py-10 px-4">
+
     <div class="儀式卡片">
-        <h2 class="text-center text-2xl font-bold mb-10">列印內容製作</h2>
+        <h2 class="text-center text-2xl font-bold">列印內容製作</h2>
         
-        <label class="font-bold block mb-2">上傳圖片</label>
-        <div class="儀式上傳框" onclick="document.getElementById('fileInput').click()" id="uploadStatus">點擊上傳圖片</div>
+        <label>上傳圖片 (黑白滿版)</label>
+        <div class="儀式上傳框" onclick="document.getElementById('fileInput').click()" id="uploadStatus">
+            點擊上傳圖片
+        </div>
         <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="uploadToImgBB(this)">
         <input type="hidden" id="finalImgUrl">
 
-        <label class="font-bold block mb-2">列印文字</label>
-        <textarea id="textContent" placeholder="請輸入內容..."></textarea>
+        <label>列印文字</label>
+        <textarea id="textContent" placeholder="請輸入欲列印的內容..."></textarea>
         
         <button class="btn-儀式完成" onclick="goToPrint()">完成並產生網頁</button>
     </div>
@@ -50,24 +84,66 @@
         async function uploadToImgBB(input) {
             const file = input.files[0];
             if (!file) return;
-            document.getElementById('uploadStatus').innerText = "上傳中...";
-            const formData = new FormData();
-            formData.append('image', file);
+
+            const status = document.getElementById('uploadStatus');
+            status.innerText = "處理並壓縮中...";
+
             try {
-                const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: 'POST', body: formData });
+                const compressedBlob = await compressImage(file);
+                status.innerText = "上傳中...";
+                const formData = new FormData();
+                formData.append('image', compressedBlob);
+
+                const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+                    method: 'POST',
+                    body: formData
+                });
                 const res = await resp.json();
+                
                 if (res.success) {
                     document.getElementById('finalImgUrl').value = res.data.url;
-                    document.getElementById('uploadStatus').innerText = "✔️ 上傳成功";
+                    status.innerText = "✔️ 上傳成功";
+                    status.style.borderColor = "#27ae60";
+                } else {
+                    alert("上傳失敗");
+                    status.innerText = "重試上傳";
                 }
-            } catch (e) { alert("上傳失敗"); }
+            } catch (e) {
+                alert("上傳出錯");
+                status.innerText = "錯誤，點擊重試";
+            }
+        }
+
+        function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 600; 
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.filter = 'grayscale(100%)';
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.6);
+                    };
+                };
+            });
         }
 
         function goToPrint() {
             const img = encodeURIComponent(document.getElementById('finalImgUrl').value);
             const text = encodeURIComponent(document.getElementById('textContent').value);
             if (!img && !text) return alert("請輸入內容");
-            // 跳轉到新的實體網頁
             window.location.href = `print.html?img=${img}&text=${text}`;
         }
     </script>
