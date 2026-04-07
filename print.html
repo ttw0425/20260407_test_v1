@@ -5,29 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>感熱紙列印稿</title>
     <style>
-        /* 移除 body 預設邊距 */
+        /* 移除 body 預設邊距，固定感熱紙寬度 */
         body { margin: 0; padding: 0; background-color: white; width: 380px; }
 
         .thermal-container {
             width: 380px; 
             margin: 0;
-            /* 保持左右 25px 邊框，縮減上下 padding (從 40px 改為 20px) */
-            padding: 20px 25px; 
+            /* 設定上下 30px 的對稱留白，左右 25px 保持邊框感 */
+            padding: 30px 25px; 
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             box-sizing: border-box;
         }
 
-        /* 圖片樣式：左右留白由容器 padding 控制，圖片與文字距離保持 25px */
+        /* 圖片樣式：寬度 100% (受限於父層 padding) */
         .thermal-img {
             width: 100%; 
             filter: grayscale(100%) contrast(160%); 
-            margin-bottom: 25px; /* 保持原本的距離 */
+            margin-bottom: 25px; 
             display: none;
         }
 
-        /* 文字樣式：左右留白由容器 padding 控制 */
+        /* 文字樣式：字體較小，保持精緻感 */
         .thermal-text {
             width: 100%;
             font-size: 1.15rem; 
@@ -39,24 +39,7 @@
             text-align: left; 
         }
 
-        /* 底部緩衝：極小化，解決下端留白過多問題 */
-        .thermal-footer {
-            height: 5px;
-            width: 100%;
-        }
-
-        /* 返回鍵 (螢幕顯示用) */
-        .back-btn {
-            position: fixed; bottom: 20px; right: 20px;
-            background: #d35400; color: white; padding: 12px 24px;
-            border-radius: 30px; text-decoration: none; 
-            font-size: 14px; font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            z-index: 100;
-        }
-
         @media print { 
-            .back-btn { display: none; } 
             body, .thermal-container { width: 380px; }
         }
     </style>
@@ -67,23 +50,22 @@
         <img id="displayImg" class="thermal-img">
         
         <div id="displayText" class="thermal-text"></div>
-        
-        <div class="thermal-footer"></div>
     </div>
 
-    <a href="index.html" class="back-btn">回上一頁修改</a>
-
     <script>
+        // 解析 URL 參數
         const params = new URLSearchParams(window.location.search);
         const imgUrl = params.get('img');
         const textContent = params.get('text');
 
+        // 渲染圖片
         if (imgUrl && imgUrl !== 'undefined' && imgUrl !== 'null' && imgUrl !== '') {
             const imgEl = document.getElementById('displayImg');
             imgEl.src = decodeURIComponent(imgUrl);
             imgEl.style.display = 'block';
         }
 
+        // 渲染文字
         if (textContent) {
             document.getElementById('displayText').innerText = decodeURIComponent(textContent);
         }
