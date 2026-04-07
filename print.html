@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>感熱紙列印稿</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: white; }
+        .thermal-strip {
+            width: 380px; /* 喵喵機標準寬度 */
+            margin: 0 auto;
+            padding: 40px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .thermal-img {
+            width: 100%;
+            filter: grayscale(100%) contrast(160%); /* 黑白處理 */
+            margin-bottom: 25px;
+            display: none;
+        }
+        .thermal-text {
+            width: 100%;
+            padding: 0 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            line-height: 1.6;
+            color: black;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            box-sizing: border-box;
+        }
+        /* 螢幕上顯示的返回鍵，列印/分享時會隱藏 */
+        .back-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            background: #666; color: white; padding: 10px 20px;
+            border-radius: 20px; text-decoration: none; font-size: 14px;
+        }
+        @media print { .back-btn { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div class="thermal-strip">
+        <img id="displayImg" class="thermal-img">
+        <div id="displayText" class="thermal-text"></div>
+    </div>
+
+    <a href="index.html" class="back-btn">回上一頁</a>
+
+    <script>
+        // 解析網址參數
+        const params = new URLSearchParams(window.location.search);
+        const imgUrl = params.get('img');
+        const textContent = params.get('text');
+
+        if (imgUrl) {
+            const imgEl = document.getElementById('displayImg');
+            imgEl.src = decodeURIComponent(imgUrl);
+            imgEl.style.display = 'block';
+        }
+
+        if (textContent) {
+            document.getElementById('displayText').innerText = decodeURIComponent(textContent);
+        }
+    </script>
+</body>
+</html>
