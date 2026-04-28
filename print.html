@@ -3,53 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>感熱紙列印稿</title>
+    <title>感熱紙列印稿 - 倒置與留白版</title>
     <style>
-        /* 移除 body 預設邊距，固定感熱紙寬度 */
-        body { margin: 0; padding: 0; background-color: white; width: 380px; }
+        /* 移除 body 預設邊距 */
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: white; 
+            width: 380px; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 旋轉容器 */
+        .rotate-wrapper {
+            width: 380px;
+            transform: rotate(180deg);
+            transform-origin: center center;
+            display: flex;
+            flex-direction: column;
+        }
 
         .thermal-container {
             width: 380px; 
             margin: 0;
-            /* 設定上下 30px 的對稱留白，左右 25px 保持邊框感 */
-            padding: 30px 25px; 
+            /* 左右 25px 留白，上下不設 padding 方便精準控制留白 */
+            padding: 0 25px; 
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             box-sizing: border-box;
         }
 
-        /* 圖片樣式：寬度 100% (受限於父層 padding) */
-        .thermal-img {
-            width: 100%; 
-            filter: grayscale(100%) contrast(160%); 
-            margin-bottom: 25px; 
-            display: none;
+        /* 文字上方留白 3公分 (約 113px) */
+        .top-margin {
+            height: 3cm;
+            width: 100%;
         }
 
-        /* 文字樣式：字體較小，保持精緻感 */
+        /* 文字樣式 */
         .thermal-text {
             width: 100%;
-            font-size: 1.0rem; 
+            font-size: 1.1rem; 
             font-weight: bold;
-            line-height: 1.7; 
+            line-height: 1.6; 
             color: black;
             word-wrap: break-word;
             white-space: pre-wrap; 
             text-align: left; 
+            margin-bottom: 20px;
+        }
+
+        /* 圖片樣式 */
+        .thermal-img {
+            width: 100%; 
+            filter: grayscale(100%) contrast(160%); 
+            display: none;
+            margin-bottom: 15px;
+        }
+
+        /* 按鈕/圖示容器樣式 */
+        .action-buttons {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px; /* 底部留一點間距 */
+        }
+
+        /* 讚與倒讚圖示 (使用 Unicode 或實體) */
+        .thermal-icon {
+            font-size: 2.5rem;
+            color: black;
+            user-select: none;
         }
 
         @media print { 
-            body, .thermal-container { width: 380px; }
+            body, .rotate-wrapper { width: 380px; }
+            /* 確保列印時背景色或圖片能顯示 */
+            * { -webkit-print-color-adjust: exact; }
         }
     </style>
 </head>
 <body>
 
-    <div class="thermal-container">
-        <img id="displayImg" class="thermal-img">
-        
-        <div id="displayText" class="thermal-text"></div>
+    <div class="rotate-wrapper">
+        <div class="top-margin"></div>
+
+        <div class="thermal-container">
+            <div id="displayText" class="thermal-text"></div>
+
+            <img id="displayImg" class="thermal-img">
+
+            <div class="action-buttons">
+                <span class="thermal-icon">👍</span>
+                <span class="thermal-icon">👎</span>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -58,16 +108,16 @@
         const imgUrl = params.get('img');
         const textContent = params.get('text');
 
+        // 渲染文字
+        if (textContent) {
+            document.getElementById('displayText').innerText = decodeURIComponent(textContent);
+        }
+
         // 渲染圖片
         if (imgUrl && imgUrl !== 'undefined' && imgUrl !== 'null' && imgUrl !== '') {
             const imgEl = document.getElementById('displayImg');
             imgEl.src = decodeURIComponent(imgUrl);
             imgEl.style.display = 'block';
-        }
-
-        // 渲染文字
-        if (textContent) {
-            document.getElementById('displayText').innerText = decodeURIComponent(textContent);
         }
     </script>
 </body>
